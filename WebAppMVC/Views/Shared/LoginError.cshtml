@@ -6,7 +6,7 @@
 </head>
 <body>
     <div>
-        <h5>Login</h5><br />
+        <h5>Login Failed</h5><br />
         @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
         {
             <div style="color: red; margin-bottom: 10px;">@ViewBag.ErrorMessage</div>
@@ -16,7 +16,15 @@
             <input type="text" name="Username" /><br /><br />
             <label>Password:</label>
             <input type="password" name="Password" /><br /><br />
-            <button type="submit" name="submit">Login</button>
+            <button style="padding: 2px 0px; font-size: 15px;">
+                <a class="nav-link text-dark" asp-controller="User" asp-action="Login">Back</a>
+            </button>
+            <div style="position:relative;bottom:45px;left:75px">
+            <button style="padding: 2px 0px; font-size: 15px;">
+                <a class="nav-link text-dark" asp-controller="User" asp-action="Register">SignUp</a>
+            </button>
+            </div>
+
         </form>
     </div>
 </body>

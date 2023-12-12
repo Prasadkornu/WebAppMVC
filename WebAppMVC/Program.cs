@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddMvc();
 builder.Services.AddDbContext<UserContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("dbcon")));
+builder.Services.AddSingleton(builder.Configuration); // Add configuration as a singleton
 var app = builder.Build();
 
 

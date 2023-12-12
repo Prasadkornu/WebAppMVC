@@ -22,10 +22,12 @@
     <None Remove="Views\NewFolder\htmlpage.html" />
     <None Remove="Views\NewFolder\Register.html" />
     <None Remove="Views\User\htmlpage.html" />
+    <None Remove="Views\User\htmlpage1.html" />
     <None Remove="Views\User\Register.html" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="BCrypt.Net" Version="0.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.0">
