@@ -1,36 +1,36 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Security.Cryptography;
-using System.Text;
+using BCrypt.Net;
 using WebAppMVC.Data;
 using WebAppMVC.Models;
+using Microsoft.Extensions.Configuration;
 
 public class UserController : Controller
 {
     private readonly UserContext _context;
+    private readonly IConfiguration _configuration;
 
-    public UserController(UserContext context)
+    public UserController(UserContext context, IConfiguration configuration)
     {
         _context = context;
+        _configuration = configuration;
     }
-    
- 
+
     [HttpGet]
     public IActionResult Register()
     {
         return View();
     }
 
-    //Register
-
     [HttpPost]
-    public IActionResult Register(string username, string password, [FromServices] IConfiguration configuration)
+    public IActionResult Register(string username, string password)
     {
         if (!ModelState.IsValid)
         {
             return View("Register");
         }
-        string secretKey = configuration["AppSettings:SecretKey"];
-        string hashedPassword = HashPasswordMD5(password,secretKey);
+
+        string secretKey = _configuration["AppSettings:SecretKey"];
+        string hashedPassword = HashPasswordBcrypt(password, secretKey);
 
         var user = new User
         {
@@ -41,21 +41,14 @@ public class UserController : Controller
         _context.Users.Add(user);
         _context.SaveChanges();
 
-        return RedirectToAction("Login","User");
+        return RedirectToAction("Login", "User");
     }
 
-    private string HashPasswordMD5(string password, string secretKey)
+    private string HashPasswordBcrypt(string password, string secretKey)
     {
-        using (MD5 md5 = MD5.Create())
-        {
-            // Combine password and secret key
-            string combinedString = $"{password}{secretKey}";
-
-            byte[] hashedBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(combinedString));
-            return BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
-        }
+        string combinedString = $"{password}{secretKey}";
+        return BCrypt.Net.BCrypt.HashPassword(combinedString);
     }
-
 
     [HttpGet]
     public IActionResult Login()
@@ -63,45 +56,28 @@ public class UserController : Controller
         return View();
     }
 
-    //Login
-
     [HttpPost]
-    public IActionResult Login(string Username, string Password, [FromServices] IConfiguration configuration)
+    public IActionResult Login(string Username, string Password)
     {
         var user = _context.Users.FirstOrDefault(u => u.Username == Username);
 
         if (user != null)
         {
-            string secretKey = configuration["AppSettings:SecretKey"];
+            string secretKey = _configuration["AppSettings:SecretKey"];
 
-            if (VerifyPasswordMD5(Password, user.Password,secretKey))
+            if (VerifyPasswordBcrypt(Password, user.Password, secretKey))
             {
-                return RedirectToAction("Index", "Home");
+                return View("LoginSuccess");
             }
         }
 
-        // User not found or password verification failed
         ViewBag.ErrorMessage = "Invalid username or password.";
-
         return View("LoginError");
     }
 
-
-    private bool VerifyPasswordMD5(string enteredPassword, string storedHashedPassword, string secretKey)
+    private bool VerifyPasswordBcrypt(string enteredPassword, string storedHashedPassword, string secretKey)
     {
-        using (MD5 md5 = MD5.Create())
-        {
-            // Combine entered password and secret key
-            string combinedString = $"{enteredPassword}{secretKey}";
-
-            byte[] hashedBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(combinedString));
-            string enteredPasswordHash = BitConverter.ToString(hashedBytes).Replace("-", "").ToLower();
-
-            // Compare the entered password hash with the stored hashed password
-            return string.Equals(enteredPasswordHash, storedHashedPassword, StringComparison.OrdinalIgnoreCase);
-        }
+        string combinedString = $"{enteredPassword}{secretKey}";
+        return BCrypt.Net.BCrypt.Verify(combinedString, storedHashedPassword);
     }
-
-
-
 }
