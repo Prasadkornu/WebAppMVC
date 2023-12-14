@@ -1,14 +1,18 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using BCrypt.Net;
 using WebAppMVC.Data;
 using WebAppMVC.Models;
+using Microsoft.Extensions.Configuration;
 
 public class UserController : Controller
 {
     private readonly UserContext _context;
+    private readonly IConfiguration _configuration;
 
-    public UserController(UserContext context)
+    public UserController(UserContext context, IConfiguration configuration)
     {
         _context = context;
+        _configuration = configuration;
     }
 
     [HttpGet]
@@ -17,51 +21,73 @@ public class UserController : Controller
         return View();
     }
 
-    //Register
-
     [HttpPost]
     public IActionResult Register(string username, string password)
     {
         if (!ModelState.IsValid)
         {
-            return View(User);
+            return View("Register");
         }
+
+        string secretKey = _configuration["AppSettings:SecretKey"];
+        string hashedPassword = HashPasswordBcrypt(password, secretKey);
 
         var user = new User
         {
             Username = username,
-            Password = password
+            Password = hashedPassword
         };
 
         _context.Users.Add(user);
         _context.SaveChanges();
 
-        return RedirectToAction("Login","User");
+        return RedirectToAction("Login", "User");
     }
+
+    private string HashPasswordBcrypt(string password, string secretKey)
+    {
+        string combinedString = $"{password}{secretKey}";
+        return BCrypt.Net.BCrypt.HashPassword(combinedString);
+    }
+
     [HttpGet]
     public IActionResult Login()
     {
         return View();
     }
 
-    //Login
-
     [HttpPost]
     public IActionResult Login(string Username, string Password)
     {
-        var user = _context.Users.SingleOrDefault(u => u.Username == Username && u.Password == Password);
+        var user = _context.Users.FirstOrDefault(u => u.Username == Username);
 
         if (user != null)
         {
-           
-            return RedirectToAction("Index","Home");
+            string secretKey = _configuration["AppSettings:SecretKey"];
+
+            if (VerifyPasswordBcrypt(Password, user.Password, secretKey))
+            {
+                HttpContext.Session.SetString("IsAuthenticated", "true");
+
+                return View("LoginSuccess");
+            }
         }
 
         ViewBag.ErrorMessage = "Invalid username or password.";
-
-        return View("Login");
+        return View("LoginError");
     }
 
+    private bool VerifyPasswordBcrypt(string enteredPassword, string storedHashedPassword, string secretKey)
+    {
+        string combinedString = $"{enteredPassword}{secretKey}";
+        return BCrypt.Net.BCrypt.Verify(combinedString, storedHashedPassword);
+    }
 
+    [HttpGet]
+    public IActionResult Logout()
+    {
+        HttpContext.Session.SetString("IsAuthenticated", "false");
 
+        return RedirectToAction("Index", "Home");
+    }
 }
