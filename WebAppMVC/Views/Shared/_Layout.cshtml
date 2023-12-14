@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Http
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -26,7 +27,15 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
 
-                        @if (!User.Identity.IsAuthenticated)
+
+                        @if (Context.Session.GetString("IsAuthenticated") == "true")
+                        {
+                            <li class="nav-item ms-auto">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="Logout">Logout</a>
+                            </li>
+                            
+                        }
+                        else
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="Register">Signup</a>
@@ -34,12 +43,7 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="Login">Login</a>
                             </li>
-                        }
-                        else
-                        {
-                            <li style="position:relative;left:1000px;" class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="">Logout</a>
-                            </li>
+                            
                         }
                          
                     </ul>

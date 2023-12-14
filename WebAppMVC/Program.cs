@@ -7,6 +7,11 @@
     builder.Services.AddMvc();
     builder.Services.AddDbContext<UserContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("dbcon")));
     builder.Services.AddSingleton(builder.Configuration); // Add configuration as a singleton
+
+    builder.Services.AddSession(options =>
+    {
+        options.IdleTimeout = TimeSpan.FromMinutes(30); // Set your desired timeout
+    });
     var app = builder.Build();
 
 
@@ -24,10 +29,12 @@
     app.UseRouting();
 
     app.UseAuthorization();
+    app.UseSession(); // Add this line
+
 
     app.MapControllerRoute(
-        name: "default",
-        pattern: "{controller=Home}/{action=Index}/{id?}"
-        );
+            name: "default",
+            pattern: "{controller=Home}/{action=Index}/{id?}"
+            );
 
-    app.Run();
+   app.Run();

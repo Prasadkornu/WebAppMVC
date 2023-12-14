@@ -67,6 +67,8 @@ public class UserController : Controller
 
             if (VerifyPasswordBcrypt(Password, user.Password, secretKey))
             {
+                HttpContext.Session.SetString("IsAuthenticated", "true");
+
                 return View("LoginSuccess");
             }
         }
@@ -79,5 +81,13 @@ public class UserController : Controller
     {
         string combinedString = $"{enteredPassword}{secretKey}";
         return BCrypt.Net.BCrypt.Verify(combinedString, storedHashedPassword);
+    }
+
+    [HttpGet]
+    public IActionResult Logout()
+    {
+        HttpContext.Session.SetString("IsAuthenticated", "false");
+
+        return RedirectToAction("Index", "Home");
     }
 }
